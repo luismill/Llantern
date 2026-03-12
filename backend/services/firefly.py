@@ -181,8 +181,7 @@ class FireflyService:
             end_date = today.replace(day=last_day).strftime("%Y-%m-%d")
 
         query_parts = [f"date_after:{start_date}", f"date_before:{end_date}"]
-        if uncategorized_only:
-            query_parts.append("has_category:false")
+        # We will filter uncategorized_only in Python to ensure it works across all Firefly versions
             
         search_query = " ".join(query_parts)
         encoded_query = urllib.parse.quote(search_query)
@@ -203,15 +202,21 @@ class FireflyService:
                     # A transaction group usually has 'transactions' array inside
                     sub_txs = attrs.get('transactions', [])
                     for tx in sub_txs:
+                        category = tx.get('category_name', '')
+                        if uncategorized_only and category:
+                            continue
+                            
                         transactions.append({
                             "id": item.get('id'),
                             "type": tx.get('type', 'unknown'),
                             "date": tx.get('date', '').split('T')[0],
                             "amount": float(tx.get('amount', 0)),
                             "description": tx.get('description', ''),
-                            "category": tx.get('category_name', ''),
+                            "category": category,
                             "source": tx.get('source_name', ''),
                             "destination": tx.get('destination_name', ''),
+                            "tags": tx.get('tags', []),
+                            "notes": tx.get('notes', '')
                         })
                 # Sort newest first
                 transactions.sort(key=lambda x: x['date'], reverse=True)
@@ -246,7 +251,7 @@ class FireflyService:
                         "id": item.get('id'),
                         "name": attrs.get('name', 'Unknown'),
                         "balance": balance,
-                        "currency_symbol": attrs.get('currency_symbol', '€'),
+                        "currency_code": attrs.get('currency_code', 'EUR'),
                         "role": attrs.get('account_role', 'default')
                     })
                 return accounts

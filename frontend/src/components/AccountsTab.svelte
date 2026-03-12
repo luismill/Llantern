@@ -93,7 +93,7 @@
           
           <div>
             <div class="text-2xl font-bold {account.balance >= 0 ? 'text-white' : 'text-red-400'}">
-              {new Intl.NumberFormat('es-ES', { style: 'currency', currency: account.currency_symbol || 'EUR' }).format(account.balance)}
+              {new Intl.NumberFormat('es-ES', { style: 'currency', currency: account.currency_code || 'EUR' }).format(account.balance)}
             </div>
             
             <!-- Optional sparkline placeholder -> You could replace this div with a tiny history graph later -->
