@@ -42,34 +42,56 @@ class FireflyService:
                 income = 0.0
                 expenses = 0.0
                 
-                # Parse the response data from Firefly III summary
-                for key_group in data.keys():
-                    # Format varies depending on the specific user settings, 
-                    # but usually there are array groups or specific keys.
-                    # We will loop through the top level array if it's a list.
-                    pass
+                # Better parsing logic that handles multiple Firefly API formats
+                items = []
+                if isinstance(data, dict):
+                    # Sometimes it's a dict mapping currency codes to summary objects
+                    for k, v in data.items():
+                        if isinstance(v, dict) and ('earned' in v or 'spent' in v or 'net-worth' in v):
+                            items.append(v)
+                        else:
+                            items.append({"key": k, "value": v})
+                elif isinstance(data, list):
+                    items = data
 
-                # If the response is a list or dictionary with 'data'
-                items = data if isinstance(data, list) else data.get('data', [])
-                if isinstance(data, dict) and not items:
-                    # Some versions return the dictionary directly keyed by properties
-                    items = [ { "key": k, "value": v } for k, v in data.items() ]
-
-                # Actually, Firefly III /api/v1/summary/basic usually returns a dictionary 
-                # where the keys might be user-defined or standard. Let's handle common structures:
                 for item in items:
                     if not isinstance(item, dict):
                         continue
-                    key_lower = item.get('key', '').lower()
-                    
-                    # Some properties might be nested in 'value' or 'amount'
-                    val = item.get('value', 0)
-                    amount = float(val) if not isinstance(val, dict) else float(val.get('amount', val.get('value', 0)))
-                    
-                    if 'earned' in key_lower or 'income' in key_lower:
-                        income += amount
-                    elif 'spent' in key_lower or 'expense' in key_lower or 'paid' in key_lower:
-                        expenses += abs(amount)  # ensure expense is positive for the formula
+
+                    # Format 1: Direct keys in the item (e.g., {"earned": {"amount": "100"}})
+                    for key, val in item.items():
+                        key_lower = key.lower()
+                        amount = 0.0
+                        if isinstance(val, dict):
+                            amount = float(val.get('value_parsed', val.get('amount', val.get('value', 0))))
+                        elif isinstance(val, (int, float, str)):
+                            try:
+                                amount = float(val)
+                            except (ValueError, TypeError):
+                                amount = 0.0
+
+                        if 'earned' in key_lower or 'income' in key_lower:
+                            income += amount
+                        elif 'spent' in key_lower or 'expense' in key_lower or 'paid' in key_lower:
+                            expenses += abs(amount)
+
+                    # Format 2: {"key": "earned", "value": 100}
+                    key_attr = item.get('key', '').lower()
+                    if key_attr:
+                        val_attr = item.get('value', item.get('value_parsed', 0))
+                        amount = 0.0
+                        if isinstance(val_attr, dict):
+                            amount = float(val_attr.get('value_parsed', val_attr.get('amount', val_attr.get('value', 0))))
+                        else:
+                            try:
+                                amount = float(val_attr)
+                            except (ValueError, TypeError):
+                                amount = 0.0
+                        
+                        if 'earned' in key_attr or 'income' in key_attr:
+                            income += amount
+                        elif 'spent' in key_attr or 'expense' in key_attr or 'paid' in key_attr:
+                            expenses += abs(amount)
 
                 balance = income - expenses
                 
