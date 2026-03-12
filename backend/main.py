@@ -27,6 +27,13 @@ async def get_summary():
     """
     return await firefly_service.get_summary()
 
+@app.get("/api/debug", summary="Get raw data for debugging")
+async def get_debug_summary():
+    """
+    Returns the exact JSON that Firefly III provides, to help fix parsing bugs.
+    """
+    return await firefly_service.get_raw_summary()
+
 @app.get("/health", summary="Health check endpoint")
 async def health_check():
     return {"status": "ok"}

@@ -94,3 +94,19 @@ class FireflyService:
                         "end": end_date
                     }
                 }
+
+    async def get_raw_summary(self) -> Dict[str, Any]:
+        today = date.today()
+        _, last_day = calendar.monthrange(today.year, today.month)
+        start_date = today.replace(day=1).strftime("%Y-%m-%d")
+        end_date = today.replace(day=last_day).strftime("%Y-%m-%d")
+
+        url = f"{self.base_url}/api/v1/summary/basic?start={start_date}&end={end_date}"
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, headers=self.headers, timeout=10.0)
+                response.raise_for_status()
+                return {"url": url, "data": response.json()}
+            except Exception as e:
+                return {"error": str(e)}
