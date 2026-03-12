@@ -19,13 +19,13 @@ app.add_middleware(
 
 firefly_service = FireflyService()
 
-@app.get("/api/summary", summary="Get monthly financial summary")
-async def get_summary():
+@app.get("/api/summary", summary="Get financial summary")
+async def get_summary(start: str = None, end: str = None):
     """
-    Returns the total income, expenses, and balance for the current month.
+    Returns the total income, expenses, and balance for a given period.
     Data is fetched directly from the configured Firefly III instance.
     """
-    return await firefly_service.get_summary()
+    return await firefly_service.get_summary(start_date=start, end_date=end)
 
 @app.get("/api/history", summary="Get historical financial data")
 async def get_history(months: int = 6):
@@ -63,6 +63,13 @@ async def get_accounts():
     Returns a list of asset accounts with their balances.
     """
     return await firefly_service.get_accounts()
+
+@app.get("/api/categories", summary="Get category aggregated summary")
+async def get_categories(start: str = None, end: str = None):
+    """
+    Returns a list of categories and their total expenses for a given period.
+    """
+    return await firefly_service.get_category_summary(start_date=start, end_date=end)
 
 @app.get("/api/debug", summary="Get raw data for debugging")
 async def get_debug_summary():

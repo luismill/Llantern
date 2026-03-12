@@ -2,6 +2,9 @@
   import { onMount } from 'svelte';
   import axios from 'axios';
   import Chart from './Chart.svelte';
+
+  export let startDate;
+  export let endDate;
   import HistoryChart from './HistoryChart.svelte';
 
   let loading = true;
@@ -36,20 +39,34 @@
           borderWidth: 0
         }]
       };
-
-      try {
-        const historyRes = await axios.get('/api/history?months=6');
-        historyData = historyRes.data;
-      } catch (e) {
-        console.error("Failed to load history:", e);
-      }
-
     } catch (err) {
       error = err.message || "Error al cargar el resumen";
+      console.error(err);
     } finally {
       loading = false;
     }
+  }
+
+  // Function to fetch history data
+  async function fetchHistory() {
+    try {
+      const historyRes = await axios.get('/api/history?months=12'); // Changed to months=12
+      historyData = historyRes.data;
+    } catch (e) {
+      console.error("Failed to load history:", e);
+    }
+  }
+
+  // Initial data load on mount
+  onMount(() => {
+    fetchSummary();
+    fetchHistory();
   });
+
+  // Re-fetch summary when startDate or endDate changes
+  $: if (startDate && endDate) {
+    fetchSummary();
+  }
 
   function formatCurrency(value) {
     return new Intl.NumberFormat('es-ES', {

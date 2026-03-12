@@ -2,8 +2,19 @@
   import DashboardTab from './components/DashboardTab.svelte';
   import TransactionsTab from './components/TransactionsTab.svelte';
   import AccountsTab from './components/AccountsTab.svelte';
+  import CategoriesTab from './components/CategoriesTab.svelte';
 
-  let currentTab = 'dashboard'; // 'dashboard', 'transactions', 'accounts'
+  let currentTab = 'dashboard'; // 'dashboard', 'transactions', 'accounts', 'categories'
+
+  // Global Date State (Defaults to 2 months)
+  const today = new Date();
+  const m = (today.getMonth() - 1 + 12) % 12;
+  const y = today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear();
+  const firstDayPrev = new Date(y, m, 1);
+  const lastDayCurrent = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+  let startDate = firstDayPrev.toISOString().split('T')[0];
+  let endDate = lastDayCurrent.toISOString().split('T')[0];
 
   function switchTab(tab) {
     currentTab = tab;
@@ -11,22 +22,41 @@
 </script>
 
 <main class="min-h-screen bg-dark-bg text-slate-200 font-sans selection:bg-brand selection:text-white pb-24">
-  <header class="sticky top-0 z-50 bg-dark-surface/80 backdrop-blur-md border-b border-dark-border px-6 py-4 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-full bg-brand flex items-center justify-center shadow-neon">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
-        </svg>
+  <header class="sticky top-0 z-50 bg-dark-surface/80 backdrop-blur-md border-b border-dark-border py-3 px-4 shadow-sm">
+    <div class="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-brand flex items-center justify-center shadow-neon">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <h1 class="text-xl font-bold tracking-tight text-white">Llantern</h1>
       </div>
-      <h1 class="text-xl font-bold tracking-tight text-white">Llantern</h1>
+
+      <!-- Global Date Filters -->
+      <div class="flex items-center gap-2 bg-dark-bg p-1 rounded-lg border border-dark-border">
+        <input 
+          type="date" 
+          bind:value={startDate} 
+          class="bg-transparent border-none text-xs text-slate-300 focus:outline-none focus:ring-0 px-2 py-1 cursor-pointer"
+        >
+        <span class="text-slate-600 text-xs">-</span>
+        <input 
+          type="date" 
+          bind:value={endDate} 
+          class="bg-transparent border-none text-xs text-slate-300 focus:outline-none focus:ring-0 px-2 py-1 cursor-pointer"
+        >
+      </div>
     </div>
   </header>
 
   <div class="max-w-4xl mx-auto px-4 py-8">
     {#if currentTab === 'dashboard'}
-      <DashboardTab />
+      <DashboardTab {startDate} {endDate} />
     {:else if currentTab === 'transactions'}
-      <TransactionsTab />
+      <TransactionsTab {startDate} {endDate} />
+    {:else if currentTab === 'categories'}
+      <CategoriesTab {startDate} {endDate} />
     {:else if currentTab === 'accounts'}
       <AccountsTab />
     {/if}
@@ -56,6 +86,18 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width={currentTab === 'transactions' ? "2.5" : "2"} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
         </svg>
         <span class="text-[10px] font-medium uppercase tracking-wider">Movimientos</span>
+      </button>
+
+      <!-- Categories Tab -->
+      <button 
+        class="flex flex-col items-center gap-1 transition-colors {currentTab === 'categories' ? 'text-brand' : 'text-slate-500 hover:text-slate-300'}"
+        on:click={() => switchTab('categories')}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width={currentTab === 'categories' ? "2.5" : "2"} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width={currentTab === 'categories' ? "2.5" : "2"} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+        </svg>
+        <span class="text-[10px] font-medium uppercase tracking-wider">Categorías</span>
       </button>
 
       <!-- Accounts Tab -->

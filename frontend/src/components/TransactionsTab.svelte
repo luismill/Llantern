@@ -4,13 +4,14 @@
   import TransactionList from './TransactionList.svelte';
   import EntityModal from './EntityModal.svelte';
 
+  export let startDate;
+  export let endDate;
+
   let transactions = [];
   let loading = true;
   let error = null;
 
   // Filters
-  let startDate = '';
-  let endDate = '';
   let uncategorizedOnly = false;
 
   // Drilldown Modal State
@@ -20,22 +21,16 @@
   // Debouncing for filters
   let filterTimeout;
 
-  onMount(() => {
-    // Set default dates (2 months: first day of previous month to last day of current)
-    const today = new Date();
-    
-    // First day of previous month
-    const m = (today.getMonth() - 1 + 12) % 12; // Handle Jan -> Dec wrap
-    const y = today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear();
-    const firstDayPrev = new Date(y, m, 1);
-    
-    // Last day of current month
-    const lastDayCurrent = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    
-    startDate = firstDayPrev.toISOString().split('T')[0];
-    endDate = lastDayCurrent.toISOString().split('T')[0];
-    
+  // Reactive reload when dates change (App.svelte manages this)
+  $: if (startDate && endDate) {
     fetchTransactions();
+  }
+
+  onMount(() => {
+    // Initial fetch if we have dates
+    if (startDate && endDate) {
+      fetchTransactions();
+    }
   });
 
   async function fetchTransactions() {
@@ -121,19 +116,7 @@
       </label>
     </div>
 
-    <!-- Date Pickers -->
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="block text-xs text-slate-500 mb-1" for="startDate">Desde</label>
-        <input type="date" id="startDate" bind:value={startDate} on:change={handleFilterChange} 
-          class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-brand/50">
-      </div>
-      <div>
-        <label class="block text-xs text-slate-500 mb-1" for="endDate">Hasta</label>
-        <input type="date" id="endDate" bind:value={endDate} on:change={handleFilterChange} 
-          class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-brand/50">
-      </div>
-    </div>
+    <!-- The Date Pickers have been moved to the global App header -->
   </div>
 
   {#if error}

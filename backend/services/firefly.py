@@ -82,16 +82,17 @@ class FireflyService:
         balance = income - expenses
         return round(income, 2), round(expenses, 2), round(balance, 2)
 
-    async def get_summary(self, target_date: date = None) -> Dict[str, Any]:
+    async def get_summary(self, target_date: date = None, start_date: str = None, end_date: str = None) -> Dict[str, Any]:
         """
-        Fetches the summary from Firefly III for a specific month (defaults to current)
+        Fetches the summary from Firefly III for a specific period.
         """
-        if target_date is None:
-            target_date = date.today()
-            
-        _, last_day = calendar.monthrange(target_date.year, target_date.month)
-        start_date = target_date.replace(day=1).strftime("%Y-%m-%d")
-        end_date = target_date.replace(day=last_day).strftime("%Y-%m-%d")
+        if not start_date or not end_date:
+            if target_date is None:
+                target_date = date.today()
+                
+            _, last_day = calendar.monthrange(target_date.year, target_date.month)
+            start_date = target_date.replace(day=1).strftime("%Y-%m-%d")
+            end_date = target_date.replace(day=last_day).strftime("%Y-%m-%d")
 
         url = f"{self.base_url}/api/v1/summary/basic?start={start_date}&end={end_date}"
 
@@ -137,8 +138,9 @@ class FireflyService:
             target = date(y, m, 1)
             summary = await self.get_summary(target)
             
-            # Formatting as 'YYYY-MM' for the frontend graph labels
-            label = target.strftime("%Y-%m")
+            # Formatting as 'Mes YYYY' in Spanish
+            meses_es = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+            label = f"{meses_es[target.month - 1]} {target.year}"
             
             history.append({
                 "label": label,
@@ -259,6 +261,27 @@ class FireflyService:
                 return transactions
             except Exception as e:
                 return [{"error": str(e)}]
+
+    async def get_category_summary(self, start_date: str = None, end_date: str = None) -> list[Dict[str, Any]]:
+        """
+        Fetches transactions and aggregates total expense per category.
+        """
+        transactions = await self.get_transactions(start_date=start_date, end_date=end_date)
+        if transactions and "error" in transactions[0]:
+            return transactions
+
+        categories_summary = {}
+        for tx in transactions:
+            # We only care about expenses for the breakdown
+            if tx.get("type") == "withdrawal":
+                cat = tx.get("category") or "Sin categoría"
+                # Accumulate the amount (storing as positive numbers for charting)
+                categories_summary[cat] = categories_summary.get(cat, 0.0) + abs(tx.get("amount", 0))
+
+        # Convert to list and sort by amount descending
+        result = [{"name": k, "amount": v} for k, v in categories_summary.items() if v > 0]
+        result.sort(key=lambda x: x["amount"], reverse=True)
+        return result
 
     async def get_accounts(self) -> list[Dict[str, Any]]:
         """
