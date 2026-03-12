@@ -165,59 +165,95 @@ class FireflyService:
             except Exception as e:
                 return {"error": str(e)}
 
-    async def get_transactions(self, start_date: str = None, end_date: str = None, uncategorized_only: bool = False) -> list[Dict[str, Any]]:
+    async def get_transactions(self, 
+                               start_date: str = None, 
+                               end_date: str = None, 
+                               uncategorized_only: bool = False,
+                               category: str = None,
+                               tag: str = None,
+                               source: str = None,
+                               destination: str = None) -> list[Dict[str, Any]]:
         """
-        Fetches transactions based on criteria.
-        Uses /api/v1/search ?query= if uncategorized_only is true, otherwise /api/v1/transactions
+        Fetches transactions based on criteria, looping through all pages.
+        Uses /api/v1/search ?query= 
         """
         import urllib.parse
         
-        if not start_date:
-            today = date.today()
-            start_date = today.replace(day=1).strftime("%Y-%m-%d")
         if not end_date:
             today = date.today()
             _, last_day = calendar.monthrange(today.year, today.month)
             end_date = today.replace(day=last_day).strftime("%Y-%m-%d")
 
+        if not start_date:
+            # Default to the first day of the PREVIOUS month
+            today = date.today()
+            m = today.month - 1
+            y = today.year
+            if m == 0:
+                m = 12
+                y -= 1
+            start_date = date(y, m, 1).strftime("%Y-%m-%d")
+
         query_parts = [f"date_after:{start_date}", f"date_before:{end_date}"]
-        # We will filter uncategorized_only in Python to ensure it works across all Firefly versions
+        
+        if category:
+            query_parts.append(f'category:"{category}"')
+        if tag:
+            query_parts.append(f'tag:"{tag}"')
+        if source:
+            query_parts.append(f'source_account:"{source}"')
+        if destination:
+            query_parts.append(f'destination_account:"{destination}"')
             
         search_query = " ".join(query_parts)
         encoded_query = urllib.parse.quote(search_query)
         
-        url = f"{self.base_url}/api/v1/search/transactions?query={encoded_query}"
+        base_search_url = f"{self.base_url}/api/v1/search/transactions?query={encoded_query}"
+        
+        transactions = []
+        current_page = 1
+        total_pages = 1 # Will be updated after first request
         
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.get(url, headers=self.headers, timeout=15.0)
-                response.raise_for_status()
-                data = response.json().get('data', [])
-                
-                transactions = []
-                for item in data:
-                    attrs = item.get('attributes', {})
-                    if not attrs: continue
+                while current_page <= total_pages:
+                    url = f"{base_search_url}&page={current_page}"
+                    response = await client.get(url, headers=self.headers, timeout=15.0)
+                    response.raise_for_status()
+                    json_resp = response.json()
                     
-                    # A transaction group usually has 'transactions' array inside
-                    sub_txs = attrs.get('transactions', [])
-                    for tx in sub_txs:
-                        category = tx.get('category_name', '')
-                        if uncategorized_only and category:
-                            continue
-                            
-                        transactions.append({
-                            "id": item.get('id'),
-                            "type": tx.get('type', 'unknown'),
-                            "date": tx.get('date', '').split('T')[0],
-                            "amount": float(tx.get('amount', 0)),
-                            "description": tx.get('description', ''),
-                            "category": category,
-                            "source": tx.get('source_name', ''),
-                            "destination": tx.get('destination_name', ''),
-                            "tags": tx.get('tags', []),
-                            "notes": tx.get('notes', '')
-                        })
+                    # Update total pages from the meta object
+                    meta = json_resp.get('meta', {})
+                    pagination = meta.get('pagination', {})
+                    total_pages = pagination.get('total_pages', 1)
+                    
+                    data = json_resp.get('data', [])
+                    
+                    for item in data:
+                        attrs = item.get('attributes', {})
+                        if not attrs: continue
+                        
+                        sub_txs = attrs.get('transactions', [])
+                        for tx in sub_txs:
+                            tx_category = tx.get('category_name', '')
+                            # Python-side fallback for uncategorized
+                            if uncategorized_only and tx_category:
+                                continue
+                                
+                            transactions.append({
+                                "id": item.get('id'),
+                                "type": tx.get('type', 'unknown'),
+                                "date": tx.get('date', '').split('T')[0],
+                                "amount": float(tx.get('amount', 0)),
+                                "description": tx.get('description', ''),
+                                "category": tx_category,
+                                "source": tx.get('source_name', ''),
+                                "destination": tx.get('destination_name', ''),
+                                "tags": tx.get('tags', []),
+                                "notes": tx.get('notes', '')
+                            })
+                    current_page += 1
+                    
                 # Sort newest first
                 transactions.sort(key=lambda x: x['date'], reverse=True)
                 return transactions

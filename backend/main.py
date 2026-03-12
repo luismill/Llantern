@@ -35,11 +35,27 @@ async def get_history(months: int = 6):
     return await firefly_service.get_history(months=months)
 
 @app.get("/api/transactions", summary="Get transactions")
-async def get_transactions(start: str = None, end: str = None, uncategorized_only: bool = False):
+async def get_transactions(
+    start: str = None, 
+    end: str = None, 
+    uncategorized_only: bool = False,
+    category: str = None,
+    tag: str = None,
+    source: str = None,
+    destination: str = None
+):
     """
-    Returns transactions, optionally filtered by date range and category status.
+    Returns transactions, optionally filtered by date range and category/entity.
     """
-    return await firefly_service.get_transactions(start_date=start, end_date=end, uncategorized_only=uncategorized_only)
+    return await firefly_service.get_transactions(
+        start_date=start, 
+        end_date=end, 
+        uncategorized_only=uncategorized_only,
+        category=category,
+        tag=tag,
+        source=source,
+        destination=destination
+    )
 
 @app.get("/api/accounts", summary="Get asset accounts")
 async def get_accounts():

@@ -1,11 +1,15 @@
 <script>
   import { onMount } from 'svelte';
   import axios from 'axios';
+  import EntityModal from './EntityModal.svelte';
 
   let accounts = [];
   let loading = true;
   let error = null;
   let totalBalance = 0;
+
+  // Drilldown state
+  let selectedAccountName = null;
 
   onMount(async () => {
     try {
@@ -77,35 +81,36 @@
     <!-- Accounts Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       {#each accounts as account}
-        <div class="bg-dark-card border border-dark-border rounded-2xl p-6 shadow hover:shadow-lg hover:border-dark-border/80 transition-all flex flex-col justify-between group relative overflow-hidden">
+        <button 
+          class="bg-dark-card border border-dark-border rounded-2xl p-6 shadow hover:shadow-lg hover:border-brand/50 hover:bg-dark-surface/50 transition-all flex flex-col justify-between group relative overflow-hidden text-left"
+          on:click={() => selectedAccountName = account.name}
+        >
           
-          <div class="flex justify-between items-start mb-4">
+          <div class="flex justify-between items-start mb-4 w-full">
             <h4 class="text-base font-medium text-slate-300 group-hover:text-brand-light transition-colors line-clamp-1 pr-4">
               {account.name}
             </h4>
             
-            <div class="p-2 bg-dark-surface rounded-lg text-slate-500 flex-shrink-0">
+            <div class="p-2 bg-dark-bg border border-dark-border group-hover:border-brand/30 rounded-lg text-slate-500 group-hover:text-brand-light transition-colors flex-shrink-0">
                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
               </svg>
             </div>
           </div>
           
-          <div>
+          <div class="w-full">
             <div class="text-2xl font-bold {account.balance >= 0 ? 'text-white' : 'text-red-400'}">
               {new Intl.NumberFormat('es-ES', { style: 'currency', currency: account.currency_code || 'EUR' }).format(account.balance)}
             </div>
             
-            <!-- Optional sparkline placeholder -> You could replace this div with a tiny history graph later -->
-            <div class="mt-4 h-8 flex items-end opacity-30 gap-1" aria-hidden="true">
-              <div class="w-full bg-emerald-500 rounded-t-sm h-full max-h-4"></div>
-              <div class="w-full bg-emerald-500 rounded-t-sm h-full max-h-5"></div>
-              <div class="w-full bg-emerald-500 rounded-t-sm h-full max-h-7"></div>
-              <div class="w-full bg-emerald-500 rounded-t-sm h-full max-h-6"></div>
-              <div class="w-full bg-emerald-500 rounded-t-sm h-full max-h-full"></div>
+            <div class="text-xs text-slate-500 mt-2 flex items-center gap-1 group-hover:text-brand/80 transition-colors">
+              <span>Ver movimientos</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
             </div>
           </div>
-        </div>
+        </button>
       {/each}
       
       {#if accounts.length === 0}
@@ -119,6 +124,14 @@
     </div>
   {/if}
 </div>
+
+{#if selectedAccountName}
+  <EntityModal 
+    filterType="source" 
+    filterValue={selectedAccountName} 
+    on:close={() => selectedAccountName = null} 
+  />
+{/if}
 
 <style>
   .animate-fade-in {
