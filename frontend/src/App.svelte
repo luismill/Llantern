@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import axios from 'axios';
   import Chart from './components/Chart.svelte';
+  import HistoryChart from './components/HistoryChart.svelte';
 
   let loading = true;
   let error = null;
@@ -12,6 +13,7 @@
     period: { start: '', end: '' }
   };
   let chartData;
+  let historyData = [];
 
   onMount(async () => {
     try {
@@ -22,7 +24,7 @@
       summary = response.data;
       
       chartData = {
-        labels: ['Income', 'Expenses', 'Balance'],
+        labels: ['Ingresos', 'Gastos', 'Balance'],
         datasets: [{
           data: [summary.income, summary.expenses, summary.balance],
           backgroundColor: [
@@ -34,8 +36,17 @@
           borderWidth: 0
         }]
       };
+
+      // Fetch history data
+      try {
+        const historyRes = await axios.get('/api/history?months=6');
+        historyData = historyRes.data;
+      } catch (e) {
+        console.error("Failed to load history:", e);
+      }
+
     } catch (err) {
-      error = err.message || "Failed to load summary";
+      error = err.message || "Error al cargar el resumen";
     } finally {
       loading = false;
     }
@@ -60,7 +71,7 @@
       <h1 class="text-xl font-bold tracking-tight text-white">Llantern</h1>
     </div>
     <div class="text-sm font-medium text-slate-400">
-      {summary.period.start.slice(0, 7) || 'Loading...'}
+      {summary.period.start.slice(0, 7) || 'Cargando...'}
     </div>
   </header>
 
@@ -89,7 +100,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
             </svg>
           </div>
-          <h2 class="text-sm font-medium text-slate-400 mb-2">Total Balance</h2>
+          <h2 class="text-sm font-medium text-slate-400 mb-2">Balance Total</h2>
           <div class="text-3xl font-bold {summary.balance >= 0 ? 'text-white' : 'text-red-400'}">
             {formatCurrency(summary.balance)}
           </div>
@@ -97,7 +108,7 @@
 
         <div class="bg-dark-card border border-dark-border rounded-3xl p-6 shadow-lg hover:border-dark-border/80 transition-colors">
           <div class="flex items-center justify-between mb-2">
-            <h2 class="text-sm font-medium text-slate-400">Income</h2>
+            <h2 class="text-sm font-medium text-slate-400">Ingresos</h2>
             <div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
@@ -111,7 +122,7 @@
 
         <div class="bg-dark-card border border-dark-border rounded-3xl p-6 shadow-lg hover:border-dark-border/80 transition-colors">
           <div class="flex items-center justify-between mb-2">
-            <h2 class="text-sm font-medium text-slate-400">Expenses</h2>
+            <h2 class="text-sm font-medium text-slate-400">Gastos</h2>
             <div class="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center text-red-400">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6" />
@@ -127,7 +138,15 @@
       <section class="bg-dark-card border border-dark-border rounded-3xl p-4 md:p-6 shadow-lg mt-6">
         <div class="h-[300px] md:h-[400px] w-full">
           {#if chartData}
-            <Chart data={chartData} type="bar" title="Current Month Breakdown" />
+            <Chart data={chartData} type="bar" title="Desglose del Mes Actual" />
+          {/if}
+        </div>
+      </section>
+
+      <section class="bg-dark-card border border-dark-border rounded-3xl p-4 md:p-6 shadow-lg mt-6 mb-12">
+        <div class="h-[300px] md:h-[400px] w-full">
+          {#if historyData.length > 0}
+            <HistoryChart data={historyData} />
           {/if}
         </div>
       </section>

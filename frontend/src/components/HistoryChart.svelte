@@ -2,35 +2,43 @@
   import { onMount, onDestroy } from 'svelte';
   import Chart from 'chart.js/auto';
 
-  export let data = {
-    labels: ['Ingresos', 'Gastos', 'Balance'],
-    datasets: [{
-      data: [0, 0, 0],
-      backgroundColor: [
-        '#10b981', // green
-        '#ef4444', // red
-        '#3b82f6', // blue
-      ],
-      borderWidth: 0,
-      borderRadius: 4
-    }]
-  };
-  export let type = 'bar';
-  export let title = 'Resumen del Mes Actual';
+  // Data expects an array of objects: { label: '2026-03', income: 1000, expenses: 800, balance: 200 }
+  export let data = [];
+  export let title = 'Evolución Histórica (Últimos 6 meses)';
 
   let canvas;
   let chart;
 
   onMount(() => {
+    initChart();
+  });
+
+  $: if (chart && data && data.length > 0) {
+    updateChartData();
+  } else if (!chart && data && data.length > 0 && canvas) {
+    initChart();
+  }
+
+  function initChart() {
+    if (!canvas) return;
+    
     chart = new Chart(canvas, {
-      type: type,
-      data: data,
+      type: 'line',
+      data: getChartData(),
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
         plugins: {
           legend: {
-            display: false,
+            display: true,
+            labels: {
+              color: '#cbd5e1',
+              font: { family: "'Outfit', sans-serif" }
+            }
           },
           title: {
             display: true,
@@ -49,9 +57,8 @@
             borderColor: '#333333',
             borderWidth: 1,
             padding: 10,
-            displayColors: false,
             callbacks: {
-              label: function(context) {
+               label: function(context) {
                 let label = context.dataset.label || '';
                 if (label) {
                   label += ': ';
@@ -73,8 +80,9 @@
             },
             ticks: {
               color: '#94a3b8',
-              font: {
-                family: "'Outfit', sans-serif"
+              font: { family: "'Outfit', sans-serif" },
+              callback: function(value) {
+                return value + ' €';
               }
             }
           },
@@ -85,9 +93,7 @@
             },
             ticks: {
               color: '#94a3b8',
-              font: {
-                family: "'Outfit', sans-serif"
-              }
+              font: { family: "'Outfit', sans-serif" }
             }
           }
         },
@@ -97,10 +103,36 @@
         }
       }
     });
-  });
+  }
 
-  $: if (chart && data) {
-    chart.data = data;
+  function getChartData() {
+    return {
+      labels: data.map(d => d.label),
+      datasets: [
+        {
+          label: 'Ingresos',
+          data: data.map(d => d.income),
+          borderColor: '#10b981', // brand green
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true
+        },
+        {
+          label: 'Gastos',
+          data: data.map(d => d.expenses),
+          borderColor: '#ef4444', // red
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: false
+        }
+      ]
+    };
+  }
+
+  function updateChartData() {
+    chart.data = getChartData();
     chart.update();
   }
 
@@ -111,6 +143,11 @@
   });
 </script>
 
-<div class="relative w-full h-full min-h-[250px]">
+<div class="relative w-full h-full min-h-[300px]">
+  {#if data.length === 0}
+    <div class="absolute inset-0 flex items-center justify-center text-slate-500">
+      Cargando historial...
+    </div>
+  {/if}
   <canvas bind:this={canvas}></canvas>
 </div>

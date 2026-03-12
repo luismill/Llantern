@@ -27,6 +27,13 @@ async def get_summary():
     """
     return await firefly_service.get_summary()
 
+@app.get("/api/history", summary="Get historical financial data")
+async def get_history(months: int = 6):
+    """
+    Returns aggregated income/expenses data over the last N months.
+    """
+    return await firefly_service.get_history(months=months)
+
 @app.get("/api/debug", summary="Get raw data for debugging")
 async def get_debug_summary():
     """
