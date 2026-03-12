@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  llantern-backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: llantern-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - FIREFLY_URL=${FIREFLY_URL}
+      - FIREFLY_PAT=${FIREFLY_PAT}
+    networks:
+      - firefly_network
+    restart: unless-stopped
+
+  llantern-frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: llantern-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - llantern-backend
+    networks:
+      - firefly_network
+    restart: unless-stopped
+
+networks:
+  # This configures Docker to use the existing Firefly III network
+  firefly_network:
+    external: true
+    # Make sure to update the name in .env or below if it differs
+    name: ${FIREFLY_NETWORK:-firefly_iii_default}
