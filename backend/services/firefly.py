@@ -63,7 +63,11 @@ class FireflyService:
                         key_lower = key.lower()
                         amount = 0.0
                         if isinstance(val, dict):
-                            amount = float(val.get('value_parsed', val.get('amount', val.get('value', 0))))
+                            amount_raw = val.get('monetary_value', val.get('amount', val.get('value', 0)))
+                            try:
+                                amount = float(amount_raw)
+                            except (ValueError, TypeError):
+                                amount = 0.0
                         elif isinstance(val, (int, float, str)):
                             try:
                                 amount = float(val)
@@ -78,10 +82,14 @@ class FireflyService:
                     # Format 2: {"key": "earned", "value": 100}
                     key_attr = item.get('key', '').lower()
                     if key_attr:
-                        val_attr = item.get('value', item.get('value_parsed', 0))
+                        val_attr = item.get('monetary_value', item.get('amount', item.get('value', 0)))
                         amount = 0.0
                         if isinstance(val_attr, dict):
-                            amount = float(val_attr.get('value_parsed', val_attr.get('amount', val_attr.get('value', 0))))
+                            amount_raw = val_attr.get('monetary_value', val_attr.get('amount', val_attr.get('value', 0)))
+                            try:
+                                amount = float(amount_raw)
+                            except (ValueError, TypeError):
+                                amount = 0.0
                         else:
                             try:
                                 amount = float(val_attr)
