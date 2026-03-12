@@ -164,3 +164,91 @@ class FireflyService:
                 return {"url": url, "data": response.json()}
             except Exception as e:
                 return {"error": str(e)}
+
+    async def get_transactions(self, start_date: str = None, end_date: str = None, uncategorized_only: bool = False) -> list[Dict[str, Any]]:
+        """
+        Fetches transactions based on criteria.
+        Uses /api/v1/search ?query= if uncategorized_only is true, otherwise /api/v1/transactions
+        """
+        import urllib.parse
+        
+        if not start_date:
+            today = date.today()
+            start_date = today.replace(day=1).strftime("%Y-%m-%d")
+        if not end_date:
+            today = date.today()
+            _, last_day = calendar.monthrange(today.year, today.month)
+            end_date = today.replace(day=last_day).strftime("%Y-%m-%d")
+
+        query_parts = [f"date_after:{start_date}", f"date_before:{end_date}"]
+        if uncategorized_only:
+            query_parts.append("has_category:false")
+            
+        search_query = " ".join(query_parts)
+        encoded_query = urllib.parse.quote(search_query)
+        
+        url = f"{self.base_url}/api/v1/search/transactions?query={encoded_query}"
+        
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, headers=self.headers, timeout=15.0)
+                response.raise_for_status()
+                data = response.json().get('data', [])
+                
+                transactions = []
+                for item in data:
+                    attrs = item.get('attributes', {})
+                    if not attrs: continue
+                    
+                    # A transaction group usually has 'transactions' array inside
+                    sub_txs = attrs.get('transactions', [])
+                    for tx in sub_txs:
+                        transactions.append({
+                            "id": item.get('id'),
+                            "type": tx.get('type', 'unknown'),
+                            "date": tx.get('date', '').split('T')[0],
+                            "amount": float(tx.get('amount', 0)),
+                            "description": tx.get('description', ''),
+                            "category": tx.get('category_name', ''),
+                            "source": tx.get('source_name', ''),
+                            "destination": tx.get('destination_name', ''),
+                        })
+                # Sort newest first
+                transactions.sort(key=lambda x: x['date'], reverse=True)
+                return transactions
+            except Exception as e:
+                return [{"error": str(e)}]
+
+    async def get_accounts(self) -> list[Dict[str, Any]]:
+        """
+        Fetches all asset accounts and their current balances.
+        """
+        url = f"{self.base_url}/api/v1/accounts?type=asset"
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, headers=self.headers, timeout=10.0)
+                response.raise_for_status()
+                data = response.json().get('data', [])
+                
+                accounts = []
+                for item in data:
+                    attrs = item.get('attributes', {})
+                    if not attrs: continue
+                    if not attrs.get('active', True): continue # Skip inactive
+                    
+                    balance_str = attrs.get('current_balance', '0')
+                    try:
+                        balance = float(balance_str)
+                    except (ValueError, TypeError):
+                        balance = 0.0
+                        
+                    accounts.append({
+                        "id": item.get('id'),
+                        "name": attrs.get('name', 'Unknown'),
+                        "balance": balance,
+                        "currency_symbol": attrs.get('currency_symbol', '€'),
+                        "role": attrs.get('account_role', 'default')
+                    })
+                return accounts
+            except Exception as e:
+                return [{"error": str(e)}]

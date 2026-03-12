@@ -34,6 +34,20 @@ async def get_history(months: int = 6):
     """
     return await firefly_service.get_history(months=months)
 
+@app.get("/api/transactions", summary="Get transactions")
+async def get_transactions(start: str = None, end: str = None, uncategorized_only: bool = False):
+    """
+    Returns transactions, optionally filtered by date range and category status.
+    """
+    return await firefly_service.get_transactions(start_date=start, end_date=end, uncategorized_only=uncategorized_only)
+
+@app.get("/api/accounts", summary="Get asset accounts")
+async def get_accounts():
+    """
+    Returns a list of asset accounts with their balances.
+    """
+    return await firefly_service.get_accounts()
+
 @app.get("/api/debug", summary="Get raw data for debugging")
 async def get_debug_summary():
     """
