@@ -42,7 +42,8 @@ async def get_transactions(
     category: str = None,
     tag: str = None,
     source: str = None,
-    destination: str = None
+    destination: str = None,
+    account: str = None
 ):
     """
     Returns transactions, optionally filtered by date range and category/entity.
@@ -54,7 +55,8 @@ async def get_transactions(
         category=category,
         tag=tag,
         source=source,
-        destination=destination
+        destination=destination,
+        account=account
     )
 
 @app.get("/api/accounts", summary="Get asset accounts")

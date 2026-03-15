@@ -174,7 +174,8 @@ class FireflyService:
                                category: str = None,
                                tag: str = None,
                                source: str = None,
-                               destination: str = None) -> list[Dict[str, Any]]:
+                               destination: str = None,
+                               account: str = None) -> list[Dict[str, Any]]:
         """
         Fetches transactions based on criteria, looping through all pages.
         Uses /api/v1/search ?query= 
@@ -206,6 +207,8 @@ class FireflyService:
             query_parts.append(f'source_account:"{source}"')
         if destination:
             query_parts.append(f'destination_account:"{destination}"')
+        if account:
+            query_parts.append(f'account:"{account}"')
             
         search_query = " ".join(query_parts)
         encoded_query = urllib.parse.quote(search_query)

@@ -3,6 +3,7 @@
   import axios from 'axios';
   import Chart from './Chart.svelte';
   import EntityModal from './EntityModal.svelte';
+  import { getCategoryIcon } from '../utils/icons.js';
 
   export let startDate;
   export let endDate;
@@ -102,9 +103,7 @@
           >
             <div class="flex items-center gap-3">
               <div class="p-2 bg-dark-surface border border-dark-border rounded-lg text-slate-400 group-hover:text-brand-light group-hover:border-brand/30 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
+                {@html getCategoryIcon(cat.name)}
               </div>
               <span class="font-medium text-slate-200 group-hover:text-brand-light transition-colors">{cat.name}</span>
             </div>

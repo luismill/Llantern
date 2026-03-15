@@ -66,6 +66,7 @@
       case 'tag': return 'Etiqueta';
       case 'source': return 'Cuenta Origen';
       case 'destination': return 'Cuenta Destino';
+      case 'account': return 'Cuenta';
       default: return 'Filtro';
     }
   }

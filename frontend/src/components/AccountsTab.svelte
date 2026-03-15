@@ -127,7 +127,7 @@
 
 {#if selectedAccountName}
   <EntityModal 
-    filterType="source" 
+    filterType="account" 
     filterValue={selectedAccountName} 
     on:close={() => selectedAccountName = null} 
   />

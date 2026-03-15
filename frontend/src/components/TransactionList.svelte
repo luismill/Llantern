@@ -1,5 +1,7 @@
 <script>
   import { createEventDispatcher } from 'svelte';
+  import { getCategoryIcon } from '../utils/icons.js';
+  
   export let transactions = [];
   export let loading = false;
 
@@ -85,8 +87,9 @@
               <div class="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
                 <span class="whitespace-nowrap">{formatDate(tx.date)}</span>
                 <span>&bull;</span>
-                <span class="truncate max-w-[120px] text-slate-400" title={tx.category || 'Sin categoría'}>
-                  {tx.category || 'Sin categoría'}
+                <span class="flex items-center gap-1.5 max-w-[140px] text-slate-400" title={tx.category || 'Sin categoría'}>
+                  <span class="flex-shrink-0 w-3.5 h-3.5 opacity-80">{@html getCategoryIcon(tx.category)}</span>
+                  <span class="truncate">{tx.category || 'Sin categoría'}</span>
                 </span>
               </div>
             </div>
@@ -145,9 +148,10 @@
               {#if selectedTx.category}
                 <button 
                   on:click={() => handleFilterClick('category', selectedTx.category)}
-                  class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-brand/10 text-brand-light hover:bg-brand/20 transition-colors"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-medium bg-brand/10 text-brand-light hover:bg-brand/20 transition-colors"
                 >
-                  {selectedTx.category}
+                  <span class="w-4 h-4 opacity-80">{@html getCategoryIcon(selectedTx.category)}</span>
+                  <span>{selectedTx.category}</span>
                 </button>
               {:else}
                 <span class="text-slate-500 italic">Sin categoría</span>
@@ -158,7 +162,7 @@
             <span class="block text-slate-500 text-xs uppercase tracking-wider mb-1">Origen</span>
             {#if selectedTx.source}
               <button 
-                on:click={() => handleFilterClick('source', selectedTx.source)}
+                on:click={() => handleFilterClick('account', selectedTx.source)}
                 class="text-slate-200 font-medium hover:text-brand-light underline decoration-dark-border hover:decoration-brand-light transition-colors"
               >
                 {selectedTx.source}
@@ -171,7 +175,7 @@
             <span class="block text-slate-500 text-xs uppercase tracking-wider mb-1">Destino</span>
             {#if selectedTx.destination}
               <button 
-                on:click={() => handleFilterClick('destination', selectedTx.destination)}
+                on:click={() => handleFilterClick('account', selectedTx.destination)}
                 class="text-slate-200 font-medium hover:text-brand-light underline decoration-dark-border hover:decoration-brand-light transition-colors"
               >
                 {selectedTx.destination}
