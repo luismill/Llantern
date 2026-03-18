@@ -245,6 +245,23 @@ class FireflyService:
                             if uncategorized_only and tx_category:
                                 continue
                                 
+                            tx_source = tx.get('source_name', '')
+                            tx_dest = tx.get('destination_name', '')
+                            
+                            # Python-side strict filtering to prevent Firefly III broad matching issues
+                            if account:
+                                if account.lower() not in tx_source.lower() and account.lower() not in tx_dest.lower():
+                                    continue
+                            if source:
+                                if source.lower() not in tx_source.lower():
+                                    continue
+                            if destination:
+                                if destination.lower() not in tx_dest.lower():
+                                    continue
+                            if category:
+                                if category.lower() not in tx_category.lower():
+                                    continue
+
                             transactions.append({
                                 "id": item.get('id'),
                                 "type": tx.get('type', 'unknown'),
@@ -252,8 +269,8 @@ class FireflyService:
                                 "amount": float(tx.get('amount', 0)),
                                 "description": tx.get('description', ''),
                                 "category": tx_category,
-                                "source": tx.get('source_name', ''),
-                                "destination": tx.get('destination_name', ''),
+                                "source": tx_source,
+                                "destination": tx_dest,
                                 "tags": tx.get('tags', []),
                                 "notes": tx.get('notes', '')
                             })
