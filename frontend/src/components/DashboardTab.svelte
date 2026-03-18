@@ -18,7 +18,7 @@
   let chartData;
   let historyData = [];
 
-  onMount(async () => {
+  async function fetchSummary() {
     try {
       const response = await axios.get('/api/summary');
       if (response.data.error) {
