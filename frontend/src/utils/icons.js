@@ -134,15 +134,18 @@ export function getAccountLogo(accountName) {
   }
   
   if (name.includes('bbva')) {
-    return `<svg viewBox="0 0 64 24" class="h-6" style="width: auto;" fill="currentColor"><text x="0" y="19" font-family="'Open Sans', sans-serif" font-weight="900" font-size="24" letter-spacing="-1.5">BBVA</text></svg>`;
+    // BBVA Logo in brand blue
+    return `<svg viewBox="0 0 65 24" class="h-6" style="width: auto;" fill="#004481"><path d="M52.34 22V2h3.4l8.26 20h-3.95l-1.92-4.82H50.8L48.88 22h-3.95l8.26-20h3.4v20h-4.25zm2.7-7.85L53.6 8.4l-1.44 5.75h2.88z M0 2h10.9c4.2 0 7.3 1.2 9.2 3.6 1.4 1.7 2.1 3.9 2.1 6.4s-.7 4.7-2.1 6.4c-1.9 2.4-5 3.6-9.2 3.6H0V2zm10.9 16.5c2.9 0 4.9-.7 6.1-2.2.9-1.1 1.4-2.6 1.4-4.3s-.5-3.2-1.4-4.3c-1.2-1.5-3.2-2.2-6.1-2.2H3.7v13h7.2zm11.7-16.5H33.5c4.2 0 7.3 1.2 9.2 3.6 1.4 1.7 2.1 3.9 2.1 6.4s-.7 4.7-2.1 6.4c-1.9 2.4-5 3.6-9.2 3.6H22.6V2zm10.9 16.5c2.9 0 4.9-.7 6.1-2.2.9-1.1 1.4-2.6 1.4-4.3s-.5-3.2-1.4-4.3c-1.2-1.5-3.2-2.2-6.1-2.2h-7.2v13h7.2z"/></svg>`;
   }
   
   if (name.includes('laboral') || name.includes('kutxa')) {
-    return `<svg viewBox="0 0 80 24" class="h-6" style="width: auto;" fill="currentColor"><text x="0" y="18" font-family="'Open Sans', sans-serif" font-weight="900" font-size="24" letter-spacing="-1">LK</text></svg>`;
+    // Laboral Kutxa - stylized text with brand green
+    return `<svg viewBox="0 0 100 24" class="h-6" style="width: auto;" fill="#a4ce39"><text x="0" y="18" font-family="'Outfit', sans-serif" font-weight="800" font-size="20">LABORAL</text><text x="65" y="18" font-family="'Outfit', sans-serif" font-weight="400" font-size="16">kutxa</text></svg>`;
   }
 
   if (name.includes('ing')) {
-    return `<svg viewBox="0 0 54 24" class="h-6" style="width: auto;" fill="currentColor"><text x="0" y="20" font-family="'Open Sans', sans-serif" font-weight="900" font-size="28" letter-spacing="-1" fill="#FF6200">ING</text></svg>`;
+    // ING Logo in brand orange
+    return `<svg viewBox="0 0 60 24" class="h-6" style="width: auto;" fill="#FF6200"><path d="M0 0h4v24H0V0zm9 0h12l5 8h-11v16h-4V0zm22 0h11c4 0 7 1 9 3s3 5 3 9-1 7-3 9-5 3-9 3H31V0zm11 20c2 0 4-.5 5-2s1.5-3.5 1.5-6.5-0.5-5-1.5-6.5-3-2-5-2h-7v17h7z"/></svg>`;
   }
 
   if (name.includes('letras') || name.includes('tesoro')) {

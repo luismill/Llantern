@@ -336,3 +336,122 @@ class FireflyService:
                 return accounts
             except Exception as e:
                 return [{"error": str(e)}]
+
+    async def get_all_categories(self) -> list[str]:
+        """Fetches all category names."""
+        url = f"{self.base_url}/api/v1/categories"
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, headers=self.headers, timeout=10.0)
+                response.raise_for_status()
+                data = response.json().get('data', [])
+                return [item.get('attributes', {}).get('name') for item in data if item.get('attributes', {}).get('name')]
+            except Exception as e:
+                return []
+
+    async def get_all_tags(self) -> list[str]:
+        """Fetches all tag names."""
+        url = f"{self.base_url}/api/v1/tags"
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, headers=self.headers, timeout=10.0)
+                response.raise_for_status()
+                data = response.json().get('data', [])
+                return [item.get('attributes', {}).get('tag') for item in data if item.get('attributes', {}).get('tag')]
+            except Exception as e:
+                return []
+
+    async def get_all_accounts_all_types(self) -> list[Dict[str, str]]:
+        """Fetches all accounts (asset, revenue, expense) for selection."""
+        # Simple implementation: fetch all accounts. Firefly allows getting accounts without type filter to get all or multiple.
+        # Actually Firefly pagination might be needed but let's try 1 page for now or just standard endpoint
+        url = f"{self.base_url}/api/v1/accounts"
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, headers=self.headers, timeout=10.0)
+                response.raise_for_status()
+                data = response.json().get('data', [])
+                
+                accounts = []
+                for item in data:
+                    attrs = item.get('attributes', {})
+                    if not attrs: continue
+                    accounts.append({
+                        "id": item.get('id'),
+                        "name": attrs.get('name', 'Unknown'),
+                        "type": attrs.get('type', 'asset')
+                    })
+                return accounts
+            except Exception:
+                return []
+
+    async def get_maintenance_updates(self) -> list[Dict[str, str]]:
+        """
+        Looks for tags associated with imports (e.g., 'csv_') and finds the date of their latest transaction.
+        """
+        all_tags = await self.get_all_tags()
+        import_tags = [t for t in all_tags if "csv" in t.lower() or "import" in t.lower() or "n8n" in t.lower()]
+        
+        updates = []
+        async with httpx.AsyncClient() as client:
+            for tag in import_tags:
+                try:
+                    import urllib.parse
+                    encoded_query = urllib.parse.quote(f'tag:"{tag}"')
+                    url = f"{self.base_url}/api/v1/search/transactions?query={encoded_query}&limit=1"
+                    response = await client.get(url, headers=self.headers, timeout=10.0)
+                    if response.status_code == 200:
+                        data = response.json().get('data', [])
+                        if data:
+                            txs = data[0].get('attributes', {}).get('transactions', [])
+                            if txs:
+                                latest_date = txs[0].get('date', '').split('T')[0]
+                                updates.append({
+                                    "tag": tag,
+                                    "last_update": latest_date
+                                })
+                except Exception:
+                    pass
+        return sorted(updates, key=lambda x: x.get('last_update', ''), reverse=True)
+
+    async def update_transaction(self, tx_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Updates specific fields of a transaction.
+        """
+        url = f"{self.base_url}/api/v1/transactions/{tx_id}"
+        async with httpx.AsyncClient() as client:
+            try:
+                # 1. Fetch existing transaction
+                get_response = await client.get(url, headers=self.headers, timeout=10.0)
+                get_response.raise_for_status()
+                current_tx = get_response.json()
+                
+                attrs = current_tx.get('data', {}).get('attributes', {})
+                sub_txs = attrs.get('transactions', [])
+                
+                if not sub_txs:
+                    return {"error": "No split transactions found."}
+                
+                # 2. Modify the first split (assuming single split for simplicity)
+                sub_tx = sub_txs[0]
+                
+                if "category" in payload:
+                    sub_tx["category_name"] = payload["category"]
+                if "source" in payload:
+                    sub_tx["source_name"] = payload["source"]
+                if "destination" in payload:
+                    sub_tx["destination_name"] = payload["destination"]
+                if "tags" in payload:
+                    sub_tx["tags"] = payload["tags"]
+                
+                # 3. Put back
+                put_payload = {
+                    "transactions": [sub_tx]
+                }
+                
+                put_response = await client.put(url, headers=self.headers, json=put_payload, timeout=10.0)
+                put_response.raise_for_status()
+                
+                return {"success": True, "id": tx_id}
+            except Exception as e:
+                return {"error": str(e)}

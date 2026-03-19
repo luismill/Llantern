@@ -22,7 +22,7 @@
       
       // Calculate total balance
       totalBalance = accounts.reduce((acc, current) => acc + current.balance, 0);
-      
+
     } catch (err) {
       error = err.message || "Error al cargar las cuentas";
     } finally {

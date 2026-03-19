@@ -80,6 +80,35 @@ async def get_debug_summary():
     """
     return await firefly_service.get_raw_summary()
 
+from pydantic import BaseModel
+
+class TransactionUpdate(BaseModel):
+    category: str | None = None
+    source: str | None = None
+    destination: str | None = None
+    tags: list[str] | None = None
+
+@app.get("/api/categories/all", summary="Get all categories")
+async def get_all_categories():
+    return await firefly_service.get_all_categories()
+
+@app.get("/api/tags/all", summary="Get all tags")
+async def get_all_tags():
+    return await firefly_service.get_all_tags()
+
+@app.get("/api/accounts/all", summary="Get all accounts")
+async def get_all_accounts():
+    return await firefly_service.get_all_accounts_all_types()
+
+@app.get("/api/maintenance/updates", summary="Get maintenance update status")
+async def get_maintenance_updates():
+    return await firefly_service.get_maintenance_updates()
+
+@app.put("/api/transactions/{tx_id}", summary="Update a transaction")
+async def update_transaction(tx_id: str, payload: TransactionUpdate):
+    update_data = payload.dict(exclude_unset=True)
+    return await firefly_service.update_transaction(tx_id, update_data)
+
 @app.get("/health", summary="Health check endpoint")
 async def health_check():
     return {"status": "ok"}
