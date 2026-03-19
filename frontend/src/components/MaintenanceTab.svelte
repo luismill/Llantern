@@ -42,26 +42,6 @@
       tags = tagRes.data;
       accounts = accRes.data;
 
-      // Mock Data Fallback
-      if (updates.length === 0 || updates[0]?.error) {
-        updates = [
-          { tag: 'csv_revolut', last_update: '2026-03-18' },
-          { tag: 'csv_bbva', last_update: '2026-03-10' },
-          { tag: 'n8n_laboralkutxa', last_update: '2026-03-15' }
-        ];
-      }
-
-      if (uncategorizedTxs.length === 0 || uncategorizedTxs[0]?.error) {
-        uncategorizedTxs = [
-          { id: '1', date: '2026-03-19', amount: -45.0, description: 'Amazon Premium', category: '', source: 'BBVA', destination: 'Amazon', tags: [] },
-          { id: '2', date: '2026-03-18', amount: -12.5, description: 'Restaurante El Paso', category: '', source: 'Revolut', destination: 'Restaurante', tags: ['efectivo'] }
-        ];
-      }
-
-      if (categories.length === 0) categories = ['Comida', 'Transporte', 'Ocio', 'Hogar', 'Salud'];
-      if (tags.length === 0) tags = ['viaje_madrid', 'mensual', 'compartido', 'efectivo'];
-      if (accounts.length === 0) accounts = [{ name: 'BBVA', type: 'asset' }, { name: 'Revolut', type: 'asset' }, { name: 'Amazon', type: 'expense' }];
-
     } catch (err) {
       error = "Error al cargar datos de mantenimiento.";
     } finally {
